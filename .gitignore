@@ -1,218 +1,488 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[codz]
-*$py.class
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E.V. - Assistente Multimodal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Rajdhani', sans-serif; background-color: #030712; }
+        .glow-purple { text-shadow: 0 0 12px rgba(168, 85, 247, 0.7); }
+        .glow-red { text-shadow: 0 0 12px rgba(239, 68, 68, 0.7); }
+        .box-glow { box-shadow: 0 0 25px rgba(168, 85, 247, 0.25); }
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #090d16; }
+        ::-webkit-scrollbar-thumb { background: #3b0764; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #581c87; }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col justify-between p-3 md:p-6 select-none relative overflow-x-hidden">
 
-# C extensions
-*.so
+    <!-- BACKGROUND GRID -->
+    <div class="fixed inset-0 pointer-events-none opacity-5 bg-[radial-gradient(#a855f7_1px,transparent_1px)] [background-size:24px_24px]"></div>
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+    <!-- HEADER HUD -->
+    <header class="flex justify-between items-center border-b border-purple-500/30 pb-3 relative z-10">
+        <div>
+            <h1 class="font-orbitron font-extrabold text-2xl md:text-3xl text-purple-400 tracking-wider glow-purple flex items-center gap-2">
+                <i class="fa-solid fa-atom text-purple-500 animate-spin" style="animation-duration: 12s;"></i> E.V.
+            </h1>
+            <p class="text-[11px] md:text-xs text-slate-400 font-mono tracking-widest">ASSISTENTE MULTIMODAL // VOZ FEMININA</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+            <button id="btnSettingsModal" class="bg-purple-950/40 border border-purple-500/40 text-purple-300 px-3 py-1.5 rounded font-orbitron text-xs hover:bg-purple-500/30 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-sliders text-purple-400"></i> CONFIGURAÇÕES
+            </button>
+            <div class="text-right">
+                <div id="hudClock" class="font-orbitron text-lg md:text-xl text-purple-300 font-bold">00:00:00</div>
+                <div id="hudTimer" class="text-[10px] text-slate-400 font-mono">SESSÃO: <span id="sessionTime" class="text-purple-400">00:00</span></div>
+            </div>
+        </div>
+    </header>
 
-# PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+    <!-- NÚCLEO ARC & ENTRADAS -->
+    <main class="my-auto flex flex-col items-center justify-center my-4 relative z-10 max-w-4xl mx-auto w-full">
+        
+        <!-- Arc Reactor -->
+        <div id="arcReactor" class="relative group cursor-pointer my-2">
+            <div id="arcCore" class="w-36 h-36 md:w-48 md:h-48 rounded-full border-4 border-purple-400 flex items-center justify-center shadow-[0_0_50px_rgba(168,85,247,0.4)] transition-all duration-300 hover:scale-105 bg-purple-950/20 backdrop-blur-sm">
+                <i id="coreIcon" class="fa-solid fa-microphone text-3xl md:text-4xl text-purple-300 glow-purple"></i>
+            </div>
+        </div>
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+        <!-- Status -->
+        <div class="text-center max-w-xl px-4 mt-2">
+            <h2 id="evStatus" class="font-orbitron font-bold text-base md:text-lg text-purple-400 tracking-wider">E.V. ONLINE E PRONTA</h2>
+            <p id="evSubtext" class="text-xs text-slate-400 mt-0.5">Clique no núcleo, aperte ESPAÇO ou insira texto/arquivos abaixo.</p>
+        </div>
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py.cover
-.hypothesis/
-.pytest_cache/
-cover/
+        <!-- CONTAINER DE INPUT E PREVIEW DE ARQUIVOS -->
+        <div class="w-full max-w-2xl mt-4 bg-slate-900/90 border border-purple-500/40 rounded-xl p-3 box-glow backdrop-blur-md">
+            
+            <div id="filePreviewContainer" class="hidden flex flex-wrap gap-2 mb-3 pb-2 border-b border-purple-500/20 max-h-36 overflow-y-auto"></div>
 
-# Translations
-*.mo
-*.pot
+            <form id="commandForm" class="flex items-center gap-2">
+                <button type="button" id="btnAttachFile" class="bg-purple-950/60 hover:bg-purple-800/50 border border-purple-500/40 text-purple-300 p-2.5 rounded-lg transition-all flex items-center justify-center text-sm" title="Anexar Fotos, Vídeos, Áudios, PDFs ou Texto">
+                    <i class="fa-solid fa-paperclip text-base"></i>
+                </button>
+                <input type="file" id="fileInput" class="hidden" multiple accept="image/*,video/*,audio/*,application/pdf,text/*,.txt,.js,.py,.html,.css,.json">
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+                <input type="text" id="userInput" placeholder="Digite uma mensagem ou comando (ex: 'abrir instagram')..." class="flex-1 bg-slate-950/80 border border-purple-500/30 rounded-lg px-4 py-2.5 text-slate-100 text-sm focus:outline-none focus:border-purple-400 placeholder:text-slate-500">
 
-# Flask stuff:
-instance/
-.webassets-cache
+                <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-orbitron text-xs px-5 py-2.5 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-purple-900/40">
+                    <span>ENVIAR</span>
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </form>
 
-# Scrapy stuff:
-.scrapy
+            <div class="flex justify-between items-center text-[10px] text-slate-500 mt-2 px-1 font-mono">
+                <span>SUPORTE: FOTOS, VÍDEOS, ÁUDIOS, PDFS E TEXTO</span>
+                <span>DRAG & DROP ATIVO</span>
+            </div>
+        </div>
+    </main>
 
-# Sphinx documentation
-docs/_build/
+    <!-- TERMINAL DE LOGS -->
+    <footer class="border-t border-purple-500/30 pt-3 relative z-10">
+        <div class="bg-slate-900/80 border border-purple-500/20 rounded-xl p-3 h-36 md:h-40 flex flex-col backdrop-blur-md">
+            <div class="flex justify-between items-center mb-1 text-xs font-orbitron text-purple-400 border-b border-purple-500/20 pb-1">
+                <span class="flex items-center gap-1.5"><i class="fa-solid fa-terminal text-[10px]"></i> TERMINAL DE RESPOSTAS</span>
+                <span id="activeEngineTag" class="text-slate-400 text-[10px] font-mono">STATUS: PRONTO</span>
+            </div>
+            <div id="terminalLog" class="overflow-y-auto flex-1 font-mono text-[11px] space-y-1.5 pr-1"></div>
+        </div>
+    </footer>
 
-# PyBuilder
-.pybuilder/
-target/
+    <!-- MODAL DE CONFIGURAÇÕES -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden z-50">
+        <div class="bg-slate-900 border border-purple-500/50 p-6 rounded-xl max-w-md w-full m-4 text-xs space-y-4 box-glow">
+            <h3 class="font-orbitron text-base text-purple-400 border-b border-slate-800 pb-2 flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i> PAINEL DE CONTROLE DA E.V.
+            </h3>
+            
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-slate-300 font-bold mb-1">Chave API do Gemini:</label>
+                    <input type="password" id="geminiKey" placeholder="Cole a sua chave (AIzaSy...)" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200 focus:outline-none focus:border-purple-400">
+                    <p class="text-[10px] text-slate-500 mt-1">Obtenha em: <a href="https://aistudio.google.com/" target="_blank" class="text-purple-400 underline">aistudio.google.com</a></p>
+                </div>
+            </div>
 
-# Jupyter Notebook
-.ipynb_checkpoints
+            <div>
+                <label class="block text-slate-300 font-bold mb-1">MODELO DO GEMINI:</label>
+                <select id="modelSelect" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200 focus:outline-none focus:border-purple-400">
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recomendado)</option>
+                    <option value="gemini-1.5-flash">Gemini 1.5 Flash (Super Estável)</option>
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                </select>
+            </div>
 
-# IPython
-profile_default/
-ipython_config.py
+            <div>
+                <label class="block text-slate-300 font-bold mb-1">VOZ DA E.V.:</label>
+                <select id="voiceSelect" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200 focus:outline-none focus:border-purple-400">
+                    <option value="">Carregando vozes do sistema...</option>
+                </select>
+            </div>
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+            <div class="border-t border-slate-800 pt-3 space-y-3">
+                <div>
+                    <label class="block text-slate-300 font-bold mb-1">TEMPO MÁXIMO DE FALA (SEGUNDOS):</label>
+                    <input type="number" id="maxTalkTime" min="3" max="60" value="15" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-bold mb-1">LIMITE DE SESSÃO (MINUTOS):</label>
+                    <input type="number" id="maxSessionTime" min="1" max="1440" value="60" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-slate-200">
+                </div>
+            </div>
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-# Pipfile.lock
+            <div class="flex justify-end gap-2 pt-2">
+                <button id="btnCloseSettings" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded font-orbitron">CANCELAR</button>
+                <button id="btnSaveSettings" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded font-orbitron">SALVAR</button>
+            </div>
+        </div>
+    </div>
 
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
+    <!-- SCRIPT DE LOGICA E CORREÇÃO -->
+    <script>
+        const config = {
+            geminiKey: localStorage.getItem('ev_gemini_key') || '',
+            model: localStorage.getItem('ev_model') || 'gemini-2.5-flash',
+            selectedVoiceURI: localStorage.getItem('ev_voice_uri') || '',
+            maxTalkTime: parseInt(localStorage.getItem('ev_max_talk')) || 15,
+            maxSessionTime: parseInt(localStorage.getItem('ev_max_session')) || 60
+        };
 
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-# poetry.lock
-# poetry.toml
+        const elements = {
+            arcCore: document.getElementById('arcCore'),
+            coreIcon: document.getElementById('coreIcon'),
+            evStatus: document.getElementById('evStatus'),
+            evSubtext: document.getElementById('evSubtext'),
+            commandForm: document.getElementById('commandForm'),
+            userInput: document.getElementById('userInput'),
+            terminalLog: document.getElementById('terminalLog'),
+            hudClock: document.getElementById('hudClock'),
+            sessionTime: document.getElementById('sessionTime'),
+            settingsModal: document.getElementById('settingsModal'),
+            btnSettingsModal: document.getElementById('btnSettingsModal'),
+            btnCloseSettings: document.getElementById('btnCloseSettings'),
+            btnSaveSettings: document.getElementById('btnSaveSettings'),
+            geminiKey: document.getElementById('geminiKey'),
+            modelSelect: document.getElementById('modelSelect'),
+            voiceSelect: document.getElementById('voiceSelect'),
+            maxTalkTime: document.getElementById('maxTalkTime'),
+            maxSessionTime: document.getElementById('maxSessionTime'),
+            btnAttachFile: document.getElementById('btnAttachFile'),
+            fileInput: document.getElementById('fileInput'),
+            filePreviewContainer: document.getElementById('filePreviewContainer')
+        };
 
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-# pdm.lock
-# pdm.toml
-.pdm-python
-.pdm-build/
+        let recognition = null;
+        let speechSynth = window.speechSynthesis;
+        let availableVoices = [];
+        let selectedVoice = null;
+        let talkTimer = null;
+        let sessionSeconds = 0;
+        let attachedFiles = [];
 
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-# pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
-.pixi
+        // MENSAGEM INICIAL NO LOG
+        window.addEventListener('DOMContentLoaded', () => {
+            log('SISTEMA', 'Iniciando E.V...', 'text-purple-400');
+            if (!config.geminiKey) {
+                log('SISTEMA', 'ATENÇÃO: Adicione sua chave API em "CONFIGURAÇÕES" para o Gemini responder!', 'text-amber-400');
+            } else {
+                log('SISTEMA', `Chave configurada. Modelo ativo: ${config.model}`, 'text-emerald-400');
+            }
+        });
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
+        // VOZES
+        function loadVoices() {
+            if (!speechSynth) return;
+            availableVoices = speechSynth.getVoices();
+            elements.voiceSelect.innerHTML = '';
 
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
+            if (availableVoices.length === 0) return;
 
-# Redis
-*.rdb
-*.aof
-*.pid
+            let ptVoices = availableVoices.filter(v => v.lang.includes('pt'));
+            let preferredVoice = null;
 
-# RabbitMQ
-mnesia/
-rabbitmq/
-rabbitmq-data/
+            ptVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.voiceURI;
+                option.textContent = `${voice.name} (${voice.lang})`;
+                elements.voiceSelect.appendChild(option);
 
-# ActiveMQ
-activemq-data/
+                const lowerName = voice.name.toLowerCase();
+                if (lowerName.includes('maria') || lowerName.includes('francisca') || lowerName.includes('luciana') || lowerName.includes('vitoria') || lowerName.includes('female') || lowerName.includes('google português') || lowerName.includes('zira')) {
+                    if (!preferredVoice) preferredVoice = voice;
+                }
+            });
 
-# SageMath parsed files
-*.sage.py
+            if (config.selectedVoiceURI) {
+                selectedVoice = availableVoices.find(v => v.voiceURI === config.selectedVoiceURI);
+            }
+            if (!selectedVoice) {
+                selectedVoice = preferredVoice || ptVoices[0] || availableVoices[0];
+            }
+            if (selectedVoice) {
+                elements.voiceSelect.value = selectedVoice.voiceURI;
+            }
+        }
 
-# Environments
-.env
-.envrc
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+        if (speechSynth) {
+            speechSynth.onvoiceschanged = loadVoices;
+            loadVoices();
+        }
 
-# Spyder project settings
-.spyderproject
-.spyproject
+        setInterval(() => {
+            sessionSeconds++;
+            const mins = Math.floor(sessionSeconds / 60);
+            const secs = sessionSeconds % 60;
+            elements.sessionTime.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }, 1000);
 
-# Rope project settings
-.ropeproject
+        function log(sender, text, styleClass = 'text-purple-300') {
+            const div = document.createElement('div');
+            div.className = styleClass;
+            div.innerHTML = `<span class="text-slate-500">[${new Date().toLocaleTimeString()}]</span> <b>[${sender}]</b> ${text}`;
+            elements.terminalLog.appendChild(div);
+            elements.terminalLog.scrollTop = elements.terminalLog.scrollHeight;
+        }
 
-# mkdocs documentation
-/site
+        function speak(text) {
+            if (!speechSynth) return;
+            speechSynth.cancel();
+            clearTimeout(talkTimer);
 
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 1.05;
+            utterance.pitch = 1.1;
 
-# Pyre type checker
-.pyre/
+            if (selectedVoice) utterance.voice = selectedVoice;
 
-# pytype static type analyzer
-.pytype/
+            talkTimer = setTimeout(() => {
+                if (speechSynth.speaking) speechSynth.cancel();
+            }, config.maxTalkTime * 1000);
 
-# Cython debug symbols
-cython_debug/
+            speechSynth.speak(utterance);
+        }
 
-# PyCharm
-#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#   and can be added to the global gitignore or merged into this file.  For a more nuclear
-#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
+        // GERENCIADOR DE ARQUIVOS
+        elements.btnAttachFile.addEventListener('click', () => elements.fileInput.click());
+        elements.fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
-# Abstra
-#   Abstra is an AI-powered process automation framework.
-#   Ignore directories containing user credentials, local state, and settings.
-#   Learn more at https://abstra.io/docs
-.abstra/
+        window.addEventListener('dragover', (e) => e.preventDefault());
+        window.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+        });
 
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#   you could uncomment the following to ignore the entire vscode folder
-# .vscode/
-# Temporary file for partial code execution
-tempCodeRunnerFile.py
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const base64Data = e.target.result.split(',')[1];
+                    attachedFiles.push({
+                        name: file.name,
+                        mimeType: file.type || 'application/octet-stream',
+                        base64: base64Data,
+                        previewUrl: file.type.startsWith('image/') ? e.target.result : null
+                    });
+                    renderFilePreviews();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
 
-# Ruff stuff:
-.ruff_cache/
+        function renderFilePreviews() {
+            if (attachedFiles.length === 0) {
+                elements.filePreviewContainer.classList.add('hidden');
+                elements.filePreviewContainer.innerHTML = '';
+                return;
+            }
+            elements.filePreviewContainer.classList.remove('hidden');
+            elements.filePreviewContainer.innerHTML = '';
 
-# PyPI configuration file
-.pypirc
+            attachedFiles.forEach((file, index) => {
+                const badge = document.createElement('div');
+                badge.className = 'flex items-center gap-2 bg-purple-950/80 border border-purple-500/40 rounded-lg p-1.5 text-xs text-slate-200';
+                badge.innerHTML = `
+                    <span class="max-w-[120px] truncate text-[11px] font-mono">${file.name}</span>
+                    <button type="button" onclick="removeFile(${index})" class="text-slate-400 hover:text-red-400 ml-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                elements.filePreviewContainer.appendChild(badge);
+            });
+        }
 
-# Marimo
-marimo/_static/
-marimo/_lsp/
-__marimo__/
+        window.removeFile = function(index) {
+            attachedFiles.splice(index, 1);
+            renderFilePreviews();
+        };
 
-# Streamlit
-.streamlit/secrets.toml
+        // ENVIAR COMANDOS E COMUNICAÇÃO COM GEMINI
+        async function handleCommand(text) {
+            if (!text.trim() && attachedFiles.length === 0) return;
+
+            log('VOCÊ', text || '[Arquivos Anexados]', 'text-slate-200');
+            elements.userInput.value = '';
+
+            if (!config.geminiKey) {
+                const err = "Configure a sua chave API do Gemini no botão CONFIGURAÇÕES!";
+                log('E.V.', err, 'text-amber-400');
+                speak(err);
+                return;
+            }
+
+            await callGeminiAPI(text, [...attachedFiles]);
+            attachedFiles = [];
+            renderFilePreviews();
+        }
+
+        async function callGeminiAPI(promptText, filesArray) {
+            elements.evStatus.innerText = "E.V. PROCESSANDO...";
+            elements.coreIcon.className = "fa-solid fa-brain text-4xl text-purple-400 animate-spin";
+
+            const parts = [];
+            parts.push({ text: "Você é a E.V., uma IA assistente em português com tom feminino. Responda em até 2 frases curtas:\n" + (promptText || "Analise o anexo.") });
+
+            filesArray.forEach(file => {
+                parts.push({
+                    inlineData: {
+                        mimeType: file.mimeType,
+                        data: file.base64
+                    }
+                });
+            });
+
+            // Modelos para tentar (Com fallback automático em caso de falha no endpoint)
+            const modelsToTry = [config.model, 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-2.0-flash'];
+            let success = false;
+
+            for (let modelName of modelsToTry) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${config.geminiKey}`;
+                    const res = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ role: 'user', parts: parts }] })
+                    });
+
+                    const data = await res.json();
+
+                    if (data.error) {
+                        throw new Error(data.error.message);
+                    }
+
+                    if (data.candidates && data.candidates[0].content.parts[0].text) {
+                        const reply = data.candidates[0].content.parts[0].text;
+                        log('E.V.', reply);
+                        speak(reply);
+                        success = true;
+                        break;
+                    }
+                } catch (err) {
+                    console.warn(`Falha no modelo ${modelName}:`, err.message);
+                }
+            }
+
+            if (!success) {
+                const failMsg = "Erro na resposta do Gemini. Verifique se a sua chave de API é válida e se possui cota ativa.";
+                log('SISTEMA', failMsg, 'text-red-400');
+                speak("Erro de conexão com o servidor.");
+            }
+
+            elements.evStatus.innerText = "E.V. ONLINE E PRONTA";
+            elements.coreIcon.className = "fa-solid fa-microphone text-4xl text-purple-300 glow-purple";
+        }
+
+        // RECONHECIMENTO DE VOZ
+        function initVoice() {
+            const SpeechReg = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechReg) {
+                log('SISTEMA', 'Navegador não suporta reconhecimento de voz.', 'text-red-400');
+                return;
+            }
+            recognition = new SpeechReg();
+            recognition.lang = 'pt-BR';
+
+            recognition.onstart = () => {
+                elements.evStatus.innerText = "E.V. OUVINDO...";
+                elements.evStatus.className = "font-orbitron font-bold text-base md:text-lg text-red-400 glow-red";
+                elements.coreIcon.className = "fa-solid fa-microphone-lines text-4xl text-red-400 animate-pulse";
+            };
+
+            recognition.onresult = (e) => {
+                const transcript = e.results[0][0].transcript;
+                handleCommand(transcript);
+            };
+
+            recognition.onend = () => {
+                elements.evStatus.innerText = "E.V. ONLINE E PRONTA";
+                elements.evStatus.className = "font-orbitron font-bold text-base md:text-lg text-purple-400 glow-purple";
+                elements.coreIcon.className = "fa-solid fa-microphone text-4xl text-purple-300 glow-purple";
+            };
+        }
+
+        // EVENTOS
+        elements.arcCore.addEventListener('click', () => {
+            if (!recognition) initVoice();
+            if (recognition) recognition.start();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && document.activeElement !== elements.userInput) {
+                e.preventDefault();
+                if (!recognition) initVoice();
+                if (recognition) recognition.start();
+            }
+        });
+
+        elements.commandForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            handleCommand(elements.userInput.value);
+        });
+
+        // MODAL CONFIGURAÇÕES
+        elements.btnSettingsModal.addEventListener('click', () => {
+            elements.geminiKey.value = config.geminiKey;
+            elements.modelSelect.value = config.model;
+            elements.maxTalkTime.value = config.maxTalkTime;
+            elements.maxSessionTime.value = config.maxSessionTime;
+            elements.settingsModal.classList.remove('hidden');
+        });
+
+        elements.btnCloseSettings.addEventListener('click', () => elements.settingsModal.classList.add('hidden'));
+
+        elements.btnSaveSettings.addEventListener('click', () => {
+            config.geminiKey = elements.geminiKey.value.trim();
+            config.model = elements.modelSelect.value;
+            config.selectedVoiceURI = elements.voiceSelect.value;
+            config.maxTalkTime = parseInt(elements.maxTalkTime.value) || 15;
+            config.maxSessionTime = parseInt(elements.maxSessionTime.value) || 60;
+
+            selectedVoice = availableVoices.find(v => v.voiceURI === config.selectedVoiceURI);
+
+            localStorage.setItem('ev_gemini_key', config.geminiKey);
+            localStorage.setItem('ev_model', config.model);
+            localStorage.setItem('ev_voice_uri', config.selectedVoiceURI);
+            localStorage.setItem('ev_max_talk', config.maxTalkTime);
+            localStorage.setItem('ev_max_session', config.maxSessionTime);
+
+            elements.settingsModal.classList.add('hidden');
+            log('SISTEMA', 'Configurações salvas.', 'text-emerald-400');
+        });
+
+        setInterval(() => elements.hudClock.innerText = new Date().toLocaleTimeString(), 1000);
+    </script>
+</body>
+</html>
